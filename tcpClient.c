@@ -8,6 +8,8 @@
 #include <arpa/inet.h>
 
 #define PORT 4444
+//Port number identifies a specific process to which an Internet or other network message is to be forwarded when it arrives at a server
+//mainly for bindinng
 
 int main(){
 

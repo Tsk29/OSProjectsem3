@@ -48,9 +48,9 @@ int main(){
 		scanf("%s", &buffer[0]);
 		send(clientSocket, buffer, strlen(buffer), 0);
 		//The send function sends data on a connected socket
-		// when :exit is given as input client is disconnected from server
+		// when exit is given as input client is disconnected from server
 
-		if(strcmp(buffer, ":exit") == 0){
+		if(strcmp(buffer, "exit") == 0){
 			close(clientSocket);
 			printf("[-]Disconnected from server.\n");
 			exit(1);

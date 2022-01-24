@@ -75,8 +75,8 @@ int main(){
 
 			while(1){
 				recv(newSocket, buffer, 1024, 0);//read incoming data from the newSocket
-				// when :exit is given as input client is disconnected from server
-				if(strcmp(buffer, ":exit") == 0){
+				// when exit is given as input client is disconnected from server
+				if(strcmp(buffer, "exit") == 0){
 					printf("Disconnected from %s:%d\n", inet_ntoa(newAddr.sin_addr), ntohs(newAddr.sin_port));
 					break;
 				}else{

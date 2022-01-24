@@ -8,14 +8,15 @@
 #include <arpa/inet.h>
 
 #define PORT 4444
+//Port number identifies a specific process to which an Internet or other network message is to be forwarded when it arrives at a server
 
 int main(){
 
-	int sockfd, ret;
+	int listenfd, ret;
 	 struct sockaddr_in serverAddr;
 	 //The SOCKADDR_IN structure specifies a transport address and port for the AF_INET address family
 
-	int newSocket;
+	int connectfd;
 	struct sockaddr_in newAddr;
 
 	socklen_t addr_size;
@@ -23,13 +24,13 @@ int main(){
 	char buffer[1024];
 	pid_t childpid;
 
-	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	listenfd = socket(AF_INET, SOCK_STREAM, 0);
 	//AF_INET for the IPv4 protocols
 	//SOCK_STREAM, for TCP application
 	//we create a new socket
 	// less than 0 means error.
 
-	if(sockfd < 0){
+	if(listenfd < 0){
 		printf("[-]Error in connection.\n");
 		exit(1);
 	}
@@ -42,14 +43,14 @@ int main(){
 	serverAddr.sin_port = htons(PORT);
 	serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");//provide ip address
 
-	ret = bind(sockfd, (struct sockaddr*)&serverAddr, sizeof(serverAddr));//bind the socket IP address to specfic port
+	ret = bind(listenfd, (struct sockaddr*)&serverAddr, sizeof(serverAddr));//bind the socket IP address to specfic port
 	if(ret < 0){
 		printf("[-]Error in binding.\n");
 		exit(1);
 	}
 	printf("[+]Bind to port %d\n", 4444);
 
-	if(listen(sockfd, 10) == 0){
+	if(listen(listenfd, 10) == 0){
 		printf("[+]Listening....\n");
 	}else{
 		printf("[-]Error in binding.\n");
@@ -61,20 +62,28 @@ int main(){
 	//inorder to handle multiple clients
 
 	{
-		newSocket = accept(sockfd, (struct sockaddr*)&newAddr, &addr_size);
+		connectfd= accept(listenfd
+	, (struct sockaddr*)&newAddr, &addr_size);
+
 		// used by a server to accept a connection request from a client
-		if(newSocket < 0){//if returned id is <0 then we exit the loop
+		if(connectfd< 0){//if returned id is <0 then we exit the loop
 			exit(1);
 		}
 		printf("Connection accepted from %s:%d\n", inet_ntoa(newAddr.sin_addr), ntohs(newAddr.sin_port));
+		////When a connection is established, accept() returns
+		//the server calls fork(), and the child process services the client
 
 		if((childpid = fork()) == 0){
-			close(sockfd);//inorder to close socket
-			//child close listening socket 
+			close(listenfd
+	);//inorder to close socket
+			
+			//The parent process waits for another connection (on the listening socket )
+			//The parent closes the connected socket since the child handles the new client
 			
 
 			while(1){
-				recv(newSocket, buffer, 1024, 0);//read incoming data from the newSocket
+				recv(connectfd, buffer, 1024, 0);//read incoming data from the connectfd
+
 				// when exit is given as input client is disconnected from server
 				if(strcmp(buffer, "exit") == 0){
 					printf("Disconnected from %s:%d\n", inet_ntoa(newAddr.sin_addr), ntohs(newAddr.sin_port));
@@ -82,7 +91,8 @@ int main(){
 				}else{
 					
 					printf("Client: %s\n", buffer);
-					send(newSocket, buffer, strlen(buffer), 0);
+					send(connectfd
+				, buffer, strlen(buffer), 0);
 					bzero(buffer, sizeof(buffer));
 				}
 			}
@@ -90,7 +100,7 @@ int main(){
 
 	}
 
-	close(newSocket);
+	close(connectfd);
 
 
 	return 0;
